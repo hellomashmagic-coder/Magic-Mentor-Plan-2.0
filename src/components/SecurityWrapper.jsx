@@ -1,8 +1,36 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
+import { db } from '../firebase';
+import { doc, updateDoc, increment } from 'firebase/firestore';
 
 export default function SecurityWrapper({ children, userData }) {
   const [isSecure, setIsSecure] = useState(true);
   const [watermarkPos, setWatermarkPos] = useState({ x: 10, y: 10 });
+  const lastViolationTime = useRef(0);
+
+  // 🛡️ Log Violation to Database
+  const logViolation = async () => {
+    const now = Date.now();
+    // Only log once every 5 seconds to prevent spam
+    if (userData?.id && now - lastViolationTime.current > 5000) {
+      lastViolationTime.current = now;
+      try {
+        const userRef = doc(db, "requests", userData.id);
+        await updateDoc(userRef, {
+          violationCount: increment(1),
+          lastViolationAt: new Date()
+        });
+        console.log("Security violation logged to database.");
+      } catch (err) {
+        console.error("Failed to log violation:", err);
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (!isSecure) {
+      logViolation();
+    }
+  }, [isSecure]);
 
   useEffect(() => {
     const handleContextMenu = (e) => e.preventDefault();

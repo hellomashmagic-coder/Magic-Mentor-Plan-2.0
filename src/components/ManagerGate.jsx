@@ -93,7 +93,21 @@ export default function ManagerGate() {
                   <h3 style={{ color: '#fff', marginBottom: '4px' }}>{req.name}</h3>
                   <p style={{ color: '#8b949e', fontSize: '14px' }}>{req.email}</p>
                   <p style={{ color: '#f6c90e', fontSize: '12px', marginTop: '4px' }}>IP: {req.ip}</p>
-                  <p style={{ color: req.status === 'approved' ? '#238636' : '#f6c90e', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', marginTop: '8px' }}>
+                  
+                  {/* 🚨 VIOLATION TRACKER */}
+                  <div style={{ 
+                    marginTop: '12px', 
+                    padding: '8px 12px', 
+                    background: req.violationCount > 5 ? 'rgba(255,0,0,0.2)' : 'rgba(255,255,255,0.05)',
+                    borderRadius: '6px',
+                    border: `1px solid ${req.violationCount > 5 ? 'red' : '#30363d'}`
+                  }}>
+                    <span style={{ color: req.violationCount > 0 ? '#ff4d4d' : '#8b949e', fontSize: '12px', fontWeight: 'bold' }}>
+                      📸 Capture Attempts: {req.violationCount || 0}
+                    </span>
+                  </div>
+
+                  <p style={{ color: req.status === 'approved' ? '#238636' : '#f6c90e', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', marginTop: '12px' }}>
                     Status: {req.status}
                   </p>
                 </div>

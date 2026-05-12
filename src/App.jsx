@@ -34,8 +34,9 @@ export default function App() {
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
           if (!snapshot.empty) {
-            const data = snapshot.docs[0].data();
-            setUserData(data);
+            const docData = snapshot.docs[0].data();
+            const docId = snapshot.docs[0].id;
+            setUserData({ ...docData, id: docId });
             setIsApproved(true);
           } else {
             setIsApproved(false);
