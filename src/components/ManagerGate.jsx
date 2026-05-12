@@ -102,9 +102,14 @@ export default function ManagerGate() {
                     borderRadius: '6px',
                     border: `1px solid ${req.violationCount > 5 ? 'red' : '#30363d'}`
                   }}>
-                    <span style={{ color: req.violationCount > 0 ? '#ff4d4d' : '#8b949e', fontSize: '12px', fontWeight: 'bold' }}>
+                    <span style={{ color: req.violationCount > 0 ? '#ff4d4d' : '#8b949e', fontSize: '12px', fontWeight: 'bold', display: 'block' }}>
                       📸 Capture Attempts: {req.violationCount || 0}
                     </span>
+                    {req.lastViolationAt && (
+                      <span style={{ color: '#8b949e', fontSize: '10px', marginTop: '4px', display: 'block' }}>
+                        Last: {req.lastViolationAt.toDate().toLocaleString()}
+                      </span>
+                    )}
                   </div>
 
                   <p style={{ color: req.status === 'approved' ? '#238636' : '#f6c90e', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', marginTop: '12px' }}>

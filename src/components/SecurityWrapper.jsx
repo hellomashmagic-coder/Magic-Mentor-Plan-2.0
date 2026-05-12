@@ -10,8 +10,8 @@ export default function SecurityWrapper({ children, userData }) {
   // 🛡️ Log Violation to Database
   const logViolation = async () => {
     const now = Date.now();
-    // Only log once every 5 seconds to prevent spam
-    if (userData?.id && now - lastViolationTime.current > 5000) {
+    // Only log once every 30 seconds to prevent spam
+    if (userData?.id && now - lastViolationTime.current > 30000) {
       lastViolationTime.current = now;
       try {
         const userRef = doc(db, "requests", userData.id);
@@ -40,34 +40,26 @@ export default function SecurityWrapper({ children, userData }) {
       }
     };
 
-    // 🛡️ Super-Fast Security Heartbeat + Lag Detector
+    // 🛡️ Security Heartbeat + Improved Lag Detector
     let lastTick = Date.now();
     const securityCheck = () => {
       const now = Date.now();
       const delta = now - lastTick;
       lastTick = now;
 
-      // If the heartbeat lags significantly (common during hardware capture)
-      if (delta > 200) {
-        console.warn("Hardware capture lag detected.");
+      // Higher threshold (500ms) to avoid counting normal device lag
+      if (delta > 500) {
         setIsSecure(false);
       }
 
       if (!document.hasFocus() || document.hidden) {
         setIsSecure(false);
       } else {
-        // We only unlock if we are SURE it's safe
-        if (delta < 100) setIsSecure(true);
+        // Only return to secure if the device is running smoothly
+        if (delta < 150) setIsSecure(true);
       }
     };
-    const heartbeat = setInterval(securityCheck, 50);
-
-    // 📱 Viewport Resize Detector (Catching screenshot previews)
-    const handleResize = () => {
-      if (window.innerHeight < 500) return; // Ignore keyboard
-      setIsSecure(false);
-      console.log("Viewport shift detected - possible screenshot preview.");
-    };
+    const heartbeat = setInterval(securityCheck, 100);
 
     window.addEventListener('contextmenu', (e) => e.preventDefault());
     window.addEventListener('keydown', (e) => {
@@ -75,7 +67,6 @@ export default function SecurityWrapper({ children, userData }) {
         e.preventDefault();
       }
     });
-    window.addEventListener('resize', handleResize);
     window.addEventListener('blur', () => setIsSecure(false));
     window.addEventListener('touchstart', (e) => {
       if (e.touches.length > 1) setIsSecure(false);
@@ -87,7 +78,6 @@ export default function SecurityWrapper({ children, userData }) {
     return () => {
       clearInterval(heartbeat);
       clearInterval(watermarkInterval);
-      window.removeEventListener('resize', handleResize);
     };
   }, []);
 
