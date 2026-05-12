@@ -1,21 +1,15 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 
-/**
- * ⚠️ ACTION REQUIRED: 
- * Go to https://console.firebase.google.com/
- * 1. Create a project.
- * 2. Add a Web App.
- * 3. Copy the firebaseConfig and paste it below.
- * 4. In Firestore Database, create a database and set rules to allow read/write for now.
- */
+// Your real web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyCPxbmwCwD5WIBEolgfpDIYi90M4qU-jeg",
+  authDomain: "magicmentor-c2199.firebaseapp.com",
+  projectId: "magicmentor-c2199",
+  storageBucket: "magicmentor-c2199.firebasestorage.app",
+  messagingSenderId: "1063334828777",
+  appId: "1:1063334828777:web:1b12d6fdf9acb8b26f6e78",
+  measurementId: "G-63H81NXYHZ"
 };
 
 const app = initializeApp(firebaseConfig);
