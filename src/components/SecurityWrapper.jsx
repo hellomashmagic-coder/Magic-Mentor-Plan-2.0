@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 
 export default function SecurityWrapper({ children, userData }) {
   const [isSecure, setIsSecure] = useState(true);
-  const [mousePos, setMousePos] = useState({ x: 50, y: 50 });
+  const [watermarkPos, setWatermarkPos] = useState({ x: 10, y: 10 });
 
   useEffect(() => {
     const handleContextMenu = (e) => e.preventDefault();
@@ -12,118 +12,75 @@ export default function SecurityWrapper({ children, userData }) {
       }
     };
 
-    const handleBlur = () => setIsSecure(false);
-    const handleFocus = () => setIsSecure(true);
+    // 🛡️ Hyper-Sensitive Whiteout Logic
+    const handleSecurityLock = () => setIsSecure(false);
+    const handleSecurityUnlock = () => setIsSecure(true);
+
     const handleVisibilityChange = () => {
-      if (document.hidden) setIsSecure(false);
-      else setIsSecure(true);
+      if (document.hidden) handleSecurityLock();
+      else handleSecurityUnlock();
     };
 
-    // Tracking for Flashlight Effect (Mouse & Touch)
-    const handleMove = (e) => {
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-      setMousePos({ 
-        x: (clientX / window.innerWidth) * 100, 
-        y: (clientY / window.innerHeight) * 100 
+    // Moving Watermark for Identity Protection
+    const moveWatermark = () => {
+      setWatermarkPos({
+        x: Math.random() * 70,
+        y: Math.random() * 85
       });
     };
+    const interval = setInterval(moveWatermark, 3000);
 
     window.addEventListener('contextmenu', handleContextMenu);
     window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('blur', handleBlur);
-    window.addEventListener('focus', handleFocus);
-    window.addEventListener('mousemove', handleMove);
-    window.addEventListener('touchmove', handleMove, { passive: false });
+    window.addEventListener('blur', handleSecurityLock);
+    window.addEventListener('focus', handleSecurityUnlock);
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       window.removeEventListener('contextmenu', handleContextMenu);
       window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('blur', handleBlur);
-      window.removeEventListener('focus', handleFocus);
-      window.removeEventListener('mousemove', handleMove);
-      window.removeEventListener('touchmove', handleMove);
+      window.removeEventListener('blur', handleSecurityLock);
+      window.removeEventListener('focus', handleSecurityUnlock);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      clearInterval(interval);
     };
   }, []);
 
   return (
-    <div style={{ 
-      position: 'relative', 
-      minHeight: '100vh', 
-      userSelect: 'none', 
-      overflow: 'hidden', 
-      background: '#0a0c10' 
-    }}>
+    <div style={{ position: 'relative', minHeight: '100vh', userSelect: 'none', background: '#0a0c10' }}>
       
-      {/* 🌫️ THE SECURITY LAYERS */}
-      <div style={{
-        filter: isSecure ? 'none' : 'blur(60px)',
-        transition: 'filter 0.3s ease',
-        minHeight: '100vh'
-      }}>
-        
-        {/* Main Dashboard (Hidden by Mask) */}
-        <div style={{
-          WebkitMaskImage: `radial-gradient(circle 150px at ${mousePos.x}% ${mousePos.y}%, black 20%, transparent 100%)`,
-          maskImage: `radial-gradient(circle 150px at ${mousePos.x}% ${mousePos.y}%, black 20%, transparent 100%)`,
-        }}>
-          {children}
-        </div>
-
-        {/* Global Blur Overlay (This covers everything except the flashlight hole) */}
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          zIndex: 5,
-          pointerEvents: 'none',
-          backdropFilter: 'blur(35px)',
-          background: 'rgba(0,0,0,0.85)',
-          WebkitMaskImage: `radial-gradient(circle 150px at ${mousePos.x}% ${mousePos.y}%, transparent 20%, black 100%)`,
-          maskImage: `radial-gradient(circle 150px at ${mousePos.x}% ${mousePos.y}%, transparent 20%, black 100%)`,
-        }} />
-      </div>
-
-      {/* Instruction Tip */}
+      {/* 🛡️ THE IDENTITY TRAP (Moves across screen) */}
       <div style={{
         position: 'fixed',
-        top: '15px',
-        left: '50%',
-        transform: 'translateX(-50%)',
-        zIndex: 10002,
-        background: 'rgba(255,255,255,0.1)',
-        padding: '5px 15px',
-        borderRadius: '20px',
-        fontSize: '11px',
-        color: '#aaa',
+        top: `${watermarkPos.y}%`,
+        left: `${watermarkPos.x}%`,
+        zIndex: 10001,
         pointerEvents: 'none',
-        border: '1px solid rgba(255,255,255,0.1)'
-      }}>
-        Move finger/mouse to reveal content
-      </div>
-
-      {/* 🛡️ DYNAMIC WATERMARK */}
-      <div style={{
-        position: 'fixed',
-        bottom: '10px',
-        right: '10px',
-        zIndex: 10003,
-        pointerEvents: 'none',
-        opacity: 0.3,
+        opacity: 0.15,
         color: '#fff',
-        fontSize: '10px',
-        padding: '4px 8px',
+        fontSize: '14px',
+        fontWeight: 'bold',
+        background: 'rgba(255,0,0,0.4)',
+        padding: '6px 12px',
         borderRadius: '4px',
-        background: 'rgba(255,0,0,0.2)'
+        whiteSpace: 'nowrap',
+        transition: 'all 2.8s ease-in-out',
+        border: '1px solid rgba(255,255,255,0.3)',
       }}>
-        CONFIDENTIAL | {userData?.email}
+        AUTHORIZED TO: {userData?.name || 'STUDENT'} | IP: {userData?.ip} | DO NOT SHARE
       </div>
 
-      {/* Security Lockout Screen */}
+      {/* Main Content */}
+      <div style={{
+        visibility: isSecure ? 'visible' : 'hidden',
+        opacity: isSecure ? 1 : 0,
+        userSelect: 'none',
+        WebkitUserSelect: 'none',
+      }}>
+        {children}
+      </div>
+
+      {/* ⚪ THE WHITE SCREEN PROTECTION */}
       {!isSecure && (
         <div style={{
           position: 'fixed',
@@ -132,16 +89,18 @@ export default function SecurityWrapper({ children, userData }) {
           width: '100%',
           height: '100%',
           zIndex: 10005,
-          background: '#000',
+          background: '#FFFFFF', // PURE WHITE SCREEN
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           textAlign: 'center',
         }}>
-          <div>
-            <div style={{ fontSize: '60px', marginBottom: '20px' }}>🔐</div>
-            <h2 style={{ color: 'red' }}>SECURITY ACTIVE</h2>
-            <p style={{ color: '#fff' }}>Please return to this window.</p>
+          <div style={{ padding: '40px' }}>
+            <h1 style={{ color: '#000', fontSize: '24px', fontWeight: 'bold', marginBottom: '20px' }}>SECURITY ALERT</h1>
+            <p style={{ color: '#333', fontSize: '16px' }}>
+              Screen capture or focus loss detected. 
+              <br/>This attempt has been recorded for your IP.
+            </p>
           </div>
         </div>
       )}
