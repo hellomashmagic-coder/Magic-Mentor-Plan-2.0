@@ -40,28 +40,34 @@ export default function SecurityWrapper({ children, userData }) {
       }
     };
 
-    // 🛡️ Super-Fast Security Heartbeat (Checks every 50ms)
+    // 🛡️ Super-Fast Security Heartbeat + Lag Detector
+    let lastTick = Date.now();
     const securityCheck = () => {
+      const now = Date.now();
+      const delta = now - lastTick;
+      lastTick = now;
+
+      // If the heartbeat lags significantly (common during hardware capture)
+      if (delta > 200) {
+        console.warn("Hardware capture lag detected.");
+        setIsSecure(false);
+      }
+
       if (!document.hasFocus() || document.hidden) {
         setIsSecure(false);
       } else {
-        setIsSecure(true);
+        // We only unlock if we are SURE it's safe
+        if (delta < 100) setIsSecure(true);
       }
     };
     const heartbeat = setInterval(securityCheck, 50);
 
-    const handleVisibilityChange = () => {
-      if (document.hidden) setIsSecure(false);
+    // 📱 Viewport Resize Detector (Catching screenshot previews)
+    const handleResize = () => {
+      if (window.innerHeight < 500) return; // Ignore keyboard
+      setIsSecure(false);
+      console.log("Viewport shift detected - possible screenshot preview.");
     };
-
-    // Fast-Moving Watermark for Identity Protection
-    const moveWatermark = () => {
-      setWatermarkPos({
-        x: Math.random() * 65,
-        y: Math.random() * 80
-      });
-    };
-    const watermarkInterval = setInterval(moveWatermark, 1800); // Much faster
 
     window.addEventListener('contextmenu', (e) => e.preventDefault());
     window.addEventListener('keydown', (e) => {
@@ -69,16 +75,19 @@ export default function SecurityWrapper({ children, userData }) {
         e.preventDefault();
       }
     });
+    window.addEventListener('resize', handleResize);
     window.addEventListener('blur', () => setIsSecure(false));
     window.addEventListener('touchstart', (e) => {
       if (e.touches.length > 1) setIsSecure(false);
     });
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) setIsSecure(false);
+    });
 
     return () => {
       clearInterval(heartbeat);
       clearInterval(watermarkInterval);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('resize', handleResize);
     };
   }, []);
 
