@@ -51,7 +51,7 @@ export default function SecurityWrapper({ children }) {
   }, []);
 
   return (
-    <div style={{ position: 'relative', minHeight: '100vh' }}>
+    <div style={{ position: 'relative', minHeight: '100vh', userSelect: 'none' }}>
       {/* Watermark Overlay */}
       <div style={{
         position: 'fixed',
@@ -61,31 +61,34 @@ export default function SecurityWrapper({ children }) {
         height: '100%',
         pointerEvents: 'none',
         zIndex: 9999,
-        opacity: 0.03,
+        opacity: 0.1, // Increased visibility
         display: 'flex',
         flexWrap: 'wrap',
         justifyContent: 'space-around',
         alignContent: 'space-around',
         userSelect: 'none',
       }}>
-        {Array.from({ length: 20 }).map((_, i) => (
+        {Array.from({ length: 40 }).map((_, i) => (
           <div key={i} style={{
             transform: 'rotate(-45deg)',
-            fontSize: '20px',
+            fontSize: '18px',
             fontWeight: 'bold',
             color: '#fff',
             whiteSpace: 'nowrap',
+            padding: '20px',
           }}>
-            CONFIDENTIAL - HELLOMASHMAGIC
+            CONFIDENTIAL - {new Date().toLocaleDateString()} - HELLOMASHMAGIC
           </div>
         ))}
       </div>
 
       {/* Main Content with Blur deterrent */}
       <div style={{
-        filter: isSecure ? 'none' : 'blur(20px)',
-        transition: 'filter 0.3s ease',
+        filter: isSecure ? 'none' : 'blur(40px)', // Increased blur depth
+        transition: 'filter 0.2s ease',
         pointerEvents: isSecure ? 'auto' : 'none',
+        userSelect: 'none',
+        WebkitUserSelect: 'none',
       }}>
         {children}
       </div>
@@ -99,7 +102,7 @@ export default function SecurityWrapper({ children }) {
           width: '100%',
           height: '100%',
           zIndex: 10000,
-          background: 'rgba(13, 15, 20, 0.9)',
+          background: '#0d0f14',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -107,8 +110,12 @@ export default function SecurityWrapper({ children }) {
           padding: '20px',
         }}>
           <div>
-            <h2 style={{ color: 'var(--accent-gold)', marginBottom: '10px', fontFamily: 'Syne' }}>SECURITY ALERT</h2>
-            <p style={{ color: '#fff', fontSize: '14px' }}>Content hidden for security reasons. Please return to the window.</p>
+            <div style={{ fontSize: '50px', marginBottom: '20px' }}>🛡️</div>
+            <h2 style={{ color: 'var(--accent-gold)', marginBottom: '10px', fontFamily: 'Syne', letterSpacing: '2px' }}>SECURITY LOCK ACTIVE</h2>
+            <p style={{ color: '#fff', fontSize: '14px', opacity: 0.8 }}>
+              Content hidden to prevent unauthorized capture. 
+              <br/>Please return to the window to resume.
+            </p>
           </div>
         </div>
       )}

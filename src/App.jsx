@@ -14,11 +14,11 @@ export default function App() {
   const [isApproved, setIsApproved] = useState(false);
   const [pendingRequest, setPendingRequest] = useState(null);
 
-  // Load approval state and check IP from localStorage for persistence
+  // Load approval state and check IP from sessionStorage (One-time use)
   useEffect(() => {
-    const savedStatus = localStorage.getItem('magic_mentor_approved');
-    const savedIp = localStorage.getItem('magic_mentor_ip');
-
+    // We don't auto-approve from previous sessions anymore
+    // This forces a fresh check every time the tab is opened
+    
     // Fetch current public IP
     fetch('https://api.ipify.org?format=json')
       .then(res => res.json())
@@ -26,19 +26,15 @@ export default function App() {
         const currentIp = data.ip;
         
         // Setup Firestore listener for real-time approval
+        // Only unlocks if there is an 'approved' entry for this specific IP
         const q = query(collection(db, "requests"), where("ip", "==", currentIp), where("status", "==", "approved"));
         const unsubscribe = onSnapshot(q, (snapshot) => {
           if (!snapshot.empty) {
             console.log("Approval received from database!");
             setIsApproved(true);
-            localStorage.setItem('magic_mentor_approved', 'true');
-            localStorage.setItem('magic_mentor_ip', currentIp);
-          } else {
-            // If not found in DB but was saved locally, verify if it was removed
-            if (savedStatus === 'true' && savedIp !== currentIp) {
-              setIsApproved(false);
-              localStorage.removeItem('magic_mentor_approved');
-            }
+            // We use sessionStorage so it expires when the tab is closed
+            sessionStorage.setItem('magic_mentor_approved', 'true');
+            sessionStorage.setItem('magic_mentor_ip', currentIp);
           }
         });
 
