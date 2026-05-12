@@ -14,27 +14,28 @@ export default function App() {
   const [isApproved, setIsApproved] = useState(false);
   const [pendingRequest, setPendingRequest] = useState(null);
 
-  // Load approval state and check IP from sessionStorage (One-time use)
+  // Lifetime IP Verification Logic
   useEffect(() => {
-    // We don't auto-approve from previous sessions anymore
-    // This forces a fresh check every time the tab is opened
-    
     // Fetch current public IP
     fetch('https://api.ipify.org?format=json')
       .then(res => res.json())
       .then(data => {
         const currentIp = data.ip;
         
-        // Setup Firestore listener for real-time approval
-        // Only unlocks if there is an 'approved' entry for this specific IP
-        const q = query(collection(db, "requests"), where("ip", "==", currentIp), where("status", "==", "approved"));
+        // Check Firestore for any approved request from this IP
+        // This provides "Lifetime" access for this network/location
+        const q = query(
+          collection(db, "requests"), 
+          where("ip", "==", currentIp), 
+          where("status", "==", "approved")
+        );
+
         const unsubscribe = onSnapshot(q, (snapshot) => {
           if (!snapshot.empty) {
-            console.log("Approval received from database!");
+            console.log("Lifetime IP match found. Dashboard unlocked.");
             setIsApproved(true);
-            // We use sessionStorage so it expires when the tab is closed
-            sessionStorage.setItem('magic_mentor_approved', 'true');
-            sessionStorage.setItem('magic_mentor_ip', currentIp);
+          } else {
+            setIsApproved(false);
           }
         });
 
