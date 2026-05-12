@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { db } from '../firebase';
-import { doc, updateDoc, increment } from 'firebase/firestore';
+import { doc, updateDoc, increment, arrayUnion } from 'firebase/firestore';
 
 export default function SecurityWrapper({ children, userData }) {
   const [isSecure, setIsSecure] = useState(true);
@@ -17,7 +17,8 @@ export default function SecurityWrapper({ children, userData }) {
         const userRef = doc(db, "requests", userData.id);
         await updateDoc(userRef, {
           violationCount: increment(1),
-          lastViolationAt: new Date()
+          lastViolationAt: new Date(),
+          violationHistory: arrayUnion(new Date())
         });
         console.log("Security violation logged to database.");
       } catch (err) {

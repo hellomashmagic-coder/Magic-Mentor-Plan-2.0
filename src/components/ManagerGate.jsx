@@ -110,6 +110,26 @@ export default function ManagerGate() {
                         Last: {req.lastViolationAt.toDate().toLocaleString()}
                       </span>
                     )}
+
+                    {/* 📜 HISTORY LIST */}
+                    {req.violationHistory && req.violationHistory.length > 0 && (
+                      <div style={{ 
+                        marginTop: '10px', 
+                        paddingTop: '8px', 
+                        borderTop: '1px solid rgba(255,255,255,0.1)',
+                        maxHeight: '80px',
+                        overflowY: 'auto',
+                        fontSize: '9px',
+                        color: '#6e7681'
+                      }}>
+                        <p style={{ marginBottom: '4px', fontWeight: 'bold', color: '#8b949e' }}>Full History:</p>
+                        {[...req.violationHistory].reverse().map((time, idx) => (
+                          <div key={idx} style={{ marginBottom: '2px' }}>
+                            • {time.toDate().toLocaleString()}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   <p style={{ color: req.status === 'approved' ? '#238636' : '#f6c90e', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', marginTop: '12px' }}>
