@@ -12,21 +12,19 @@ import ManagerGate from './components/ManagerGate';
 export default function App() {
   const [activeLevel, setActiveLevel] = useState(0);
   const [isApproved, setIsApproved] = useState(false);
+  const [userData, setUserData] = useState(null);
   const [pendingRequest, setPendingRequest] = useState(null);
 
   // Strict Device-Locked Lifetime Approval
   useEffect(() => {
-    // Generate a simple device fingerprint
     const fingerprint = `${navigator.userAgent}-${window.screen.width}x${window.screen.height}`;
 
     fetch('https://api.ipify.org?format=json')
       .then(res => res.json())
       .then(data => {
         const currentIp = data.ip;
-        
         if (!currentIp || currentIp === 'Detecting...') return;
 
-        // Query Firestore for an approved entry matching BOTH IP and Fingerprint
         const q = query(
           collection(db, "requests"), 
           where("ip", "==", currentIp), 
@@ -36,7 +34,8 @@ export default function App() {
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
           if (!snapshot.empty) {
-            console.log("Verified Device Match found. Unlocking...");
+            const data = snapshot.docs[0].data();
+            setUserData(data);
             setIsApproved(true);
           } else {
             setIsApproved(false);
@@ -50,11 +49,10 @@ export default function App() {
 
   const handleRequestAccess = (data) => {
     setPendingRequest(data);
-    console.log('Sending approval request to hellomashmagic@gmail.com for:', data);
   };
 
   const DashboardLayout = () => (
-    <SecurityWrapper>
+    <SecurityWrapper userData={userData}>
       <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
         {/* Header */}
         <header style={{
