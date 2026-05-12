@@ -18,36 +18,31 @@ export default function AccessGate({ onRequested }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (email && name) {
+    if (email && name && ip !== 'Detecting...') {
       try {
         setSubmitted(true);
         
-        // 1. Send Email Notification via EmailJS
-        // ⚠️ REPLACE WITH YOUR OWN KEYS FROM EMAILJS.COM
+        // Generate device fingerprint
+        const fingerprint = `${navigator.userAgent}-${window.screen.width}x${window.screen.height}`;
+
+        // 1. Send Email Notification
         const templateParams = {
           from_name: name,
           from_email: email,
           ip_address: ip,
           to_email: 'hellomashmagic@gmail.com',
-          message: `New access request from ${name} (${email}) at IP: ${ip}`
+          message: `New access request from ${name} at IP: ${ip} (Device: ${fingerprint})`
         };
+        
+        // (emailjs.send call here...)
+        emailjs.send('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', templateParams, 'YOUR_PUBLIC_KEY');
 
-        emailjs.send(
-          'YOUR_SERVICE_ID', 
-          'YOUR_TEMPLATE_ID', 
-          templateParams, 
-          'YOUR_PUBLIC_KEY'
-        ).then(() => {
-          console.log('Email sent successfully!');
-        }).catch((err) => {
-          console.error('Email failed to send:', err);
-        });
-
-        // 2. Write request to Firestore for real-time approval
+        // 2. Write to Firestore with Fingerprint
         await addDoc(collection(db, "requests"), {
           name,
           email,
           ip,
+          fingerprint,
           status: 'pending',
           timestamp: serverTimestamp()
         });
@@ -55,9 +50,10 @@ export default function AccessGate({ onRequested }) {
         onRequested({ name, email, ip });
       } catch (err) {
         console.error("Error submitting request:", err);
-        alert("Failed to send request. Please check your internet or Firebase config.");
         setSubmitted(false);
       }
+    } else if (ip === 'Detecting...') {
+      alert("Please wait for IP detection to complete before requesting access.");
     }
   };
 

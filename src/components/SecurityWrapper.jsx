@@ -27,9 +27,12 @@ export default function SecurityWrapper({ children }) {
       }
     };
 
-    // 3. Blur on Window Focus Loss
+    // 3. Blur on Window Focus Loss & Viewport Exit
     const handleBlur = () => setIsSecure(false);
     const handleFocus = () => setIsSecure(true);
+    const handleMouseLeave = () => setIsSecure(false);
+    const handleMouseEnter = () => setIsSecure(true);
+
     const handleVisibilityChange = () => {
       if (document.hidden) setIsSecure(false);
       else setIsSecure(true);
@@ -39,6 +42,8 @@ export default function SecurityWrapper({ children }) {
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('blur', handleBlur);
     window.addEventListener('focus', handleFocus);
+    document.addEventListener('mouseleave', handleMouseLeave);
+    document.addEventListener('mouseenter', handleMouseEnter);
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
@@ -46,6 +51,8 @@ export default function SecurityWrapper({ children }) {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('blur', handleBlur);
       window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('mouseleave', handleMouseLeave);
+      document.removeEventListener('mouseenter', handleMouseEnter);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []);

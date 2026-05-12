@@ -14,25 +14,29 @@ export default function App() {
   const [isApproved, setIsApproved] = useState(false);
   const [pendingRequest, setPendingRequest] = useState(null);
 
-  // Lifetime IP Verification Logic
+  // Strict Device-Locked Lifetime Approval
   useEffect(() => {
-    // Fetch current public IP
+    // Generate a simple device fingerprint
+    const fingerprint = `${navigator.userAgent}-${window.screen.width}x${window.screen.height}`;
+
     fetch('https://api.ipify.org?format=json')
       .then(res => res.json())
       .then(data => {
         const currentIp = data.ip;
         
-        // Check Firestore for any approved request from this IP
-        // This provides "Lifetime" access for this network/location
+        if (!currentIp || currentIp === 'Detecting...') return;
+
+        // Query Firestore for an approved entry matching BOTH IP and Fingerprint
         const q = query(
           collection(db, "requests"), 
           where("ip", "==", currentIp), 
+          where("fingerprint", "==", fingerprint),
           where("status", "==", "approved")
         );
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
           if (!snapshot.empty) {
-            console.log("Lifetime IP match found. Dashboard unlocked.");
+            console.log("Verified Device Match found. Unlocking...");
             setIsApproved(true);
           } else {
             setIsApproved(false);
@@ -41,7 +45,7 @@ export default function App() {
 
         return () => unsubscribe();
       })
-      .catch(err => console.error('Failed to fetch IP:', err));
+      .catch(err => console.error('Security Audit Failed:', err));
   }, []);
 
   const handleRequestAccess = (data) => {
