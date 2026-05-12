@@ -10,8 +10,8 @@ export default function SecurityWrapper({ children, userData }) {
   // 🛡️ Log Violation to Database
   const logViolation = async () => {
     const now = Date.now();
-    // Only log once every 30 seconds to prevent spam
-    if (userData?.id && now - lastViolationTime.current > 30000) {
+    // Reduced cooldown to 2 seconds for instant reporting
+    if (userData?.id && now - lastViolationTime.current > 2000) {
       lastViolationTime.current = now;
       try {
         const userRef = doc(db, "requests", userData.id);
