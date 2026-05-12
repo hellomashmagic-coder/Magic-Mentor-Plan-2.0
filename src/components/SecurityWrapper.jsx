@@ -12,76 +12,80 @@ export default function SecurityWrapper({ children, userData }) {
       }
     };
 
-    // 🛡️ Hyper-Sensitive Whiteout Logic
-    const handleSecurityLock = () => setIsSecure(false);
-    const handleSecurityUnlock = () => setIsSecure(true);
+    // 🛡️ Super-Fast Security Heartbeat (Checks every 50ms)
+    const securityCheck = () => {
+      if (!document.hasFocus() || document.hidden) {
+        setIsSecure(false);
+      } else {
+        setIsSecure(true);
+      }
+    };
+    const heartbeat = setInterval(securityCheck, 50);
 
     const handleVisibilityChange = () => {
-      if (document.hidden) handleSecurityLock();
-      else handleSecurityUnlock();
+      if (document.hidden) setIsSecure(false);
     };
 
-    // Moving Watermark for Identity Protection
+    // Fast-Moving Watermark for Identity Protection
     const moveWatermark = () => {
       setWatermarkPos({
-        x: Math.random() * 70,
-        y: Math.random() * 85
+        x: Math.random() * 65,
+        y: Math.random() * 80
       });
     };
-    const interval = setInterval(moveWatermark, 3000);
+    const watermarkInterval = setInterval(moveWatermark, 1800); // Much faster
 
-    window.addEventListener('contextmenu', handleContextMenu);
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('blur', handleSecurityLock);
-    window.addEventListener('focus', handleSecurityUnlock);
+    window.addEventListener('contextmenu', (e) => e.preventDefault());
+    window.addEventListener('keydown', (e) => {
+      if ((e.metaKey || e.ctrlKey) && (e.key === 'p' || e.key === 's' || e.key === 'c')) {
+        e.preventDefault();
+      }
+    });
+    window.addEventListener('blur', () => setIsSecure(false));
+    window.addEventListener('touchstart', (e) => {
+      if (e.touches.length > 1) setIsSecure(false);
+    });
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
-      window.removeEventListener('contextmenu', handleContextMenu);
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('blur', handleSecurityLock);
-      window.removeEventListener('focus', handleSecurityUnlock);
+      clearInterval(heartbeat);
+      clearInterval(watermarkInterval);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      clearInterval(interval);
     };
   }, []);
 
   return (
     <div style={{ position: 'relative', minHeight: '100vh', userSelect: 'none', background: '#0a0c10' }}>
       
-      {/* 🛡️ THE IDENTITY TRAP (Moves across screen) */}
+      {/* 🛡️ THE IDENTITY TRAP (Faster & More Visible) */}
       <div style={{
         position: 'fixed',
         top: `${watermarkPos.y}%`,
         left: `${watermarkPos.x}%`,
         zIndex: 10001,
         pointerEvents: 'none',
-        opacity: 0.15,
+        opacity: 0.25,
         color: '#fff',
-        fontSize: '14px',
-        fontWeight: 'bold',
-        background: 'rgba(255,0,0,0.4)',
-        padding: '6px 12px',
-        borderRadius: '4px',
+        fontSize: '15px',
+        fontWeight: '900',
+        background: 'rgba(255,0,0,0.6)',
+        padding: '8px 16px',
+        borderRadius: '6px',
         whiteSpace: 'nowrap',
-        transition: 'all 2.8s ease-in-out',
-        border: '1px solid rgba(255,255,255,0.3)',
+        transition: 'all 1.5s linear',
+        border: '2px solid #fff',
+        boxShadow: '0 0 20px rgba(255,0,0,0.5)',
       }}>
-        AUTHORIZED TO: {userData?.name || 'STUDENT'} | IP: {userData?.ip} | DO NOT SHARE
+        IDENTITY: {userData?.name} | {userData?.ip} | TRACED
       </div>
 
-      {/* Main Content */}
-      <div style={{
-        visibility: isSecure ? 'visible' : 'hidden',
-        opacity: isSecure ? 1 : 0,
-        userSelect: 'none',
-        WebkitUserSelect: 'none',
-      }}>
-        {children}
-      </div>
-
-      {/* ⚪ THE WHITE SCREEN PROTECTION */}
-      {!isSecure && (
+      {/* Main Content (Strict Removal) */}
+      {isSecure ? (
+        <div style={{ userSelect: 'none', WebkitUserSelect: 'none' }}>
+          {children}
+        </div>
+      ) : (
+        /* ⚪ THE AGGRESSIVE WHITE SCREEN */
         <div style={{
           position: 'fixed',
           top: 0,
@@ -89,17 +93,22 @@ export default function SecurityWrapper({ children, userData }) {
           width: '100%',
           height: '100%',
           zIndex: 10005,
-          background: '#FFFFFF', // PURE WHITE SCREEN
+          background: '#FFFFFF', 
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           textAlign: 'center',
+          cursor: 'none'
         }}>
-          <div style={{ padding: '40px' }}>
-            <h1 style={{ color: '#000', fontSize: '24px', fontWeight: 'bold', marginBottom: '20px' }}>SECURITY ALERT</h1>
-            <p style={{ color: '#333', fontSize: '16px' }}>
-              Screen capture or focus loss detected. 
-              <br/>This attempt has been recorded for your IP.
+          <div style={{ padding: '40px', color: '#000' }}>
+            <div style={{ fontSize: '100px', marginBottom: '20px' }}>🛑</div>
+            <h1 style={{ fontSize: '32px', fontWeight: '900', letterSpacing: '-1px' }}>SECURITY BREACH</h1>
+            <p style={{ fontSize: '18px', fontWeight: 'bold', opacity: 0.7 }}>
+              UNAUTHORIZED CAPTURE DETECTED. 
+              <br/>THIS DEVICE HAS BEEN FLAGGED.
+            </p>
+            <p style={{ marginTop: '20px', fontSize: '12px', color: 'red' }}>
+              IP: {userData?.ip} | DEVICE ID: {navigator.userAgent.slice(0, 20)}
             </p>
           </div>
         </div>
