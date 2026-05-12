@@ -2,20 +2,16 @@ import React, { useEffect, useState } from 'react';
 
 export default function SecurityWrapper({ children, userData }) {
   const [isSecure, setIsSecure] = useState(true);
-  const [watermarkPos, setWatermarkPos] = useState({ x: 0, y: 0 });
+  const [mousePos, setMousePos] = useState({ x: 50, y: 50 });
 
   useEffect(() => {
-    // 1. Disable Right-Click
     const handleContextMenu = (e) => e.preventDefault();
-
-    // 2. Disable Keyboard Shortcuts
     const handleKeyDown = (e) => {
       if ((e.metaKey || e.ctrlKey) && (e.key === 'p' || e.key === 's' || e.key === 'c')) {
         e.preventDefault();
       }
     };
 
-    // 3. Security Blur & Multi-Device Protection
     const handleBlur = () => setIsSecure(false);
     const handleFocus = () => setIsSecure(true);
     const handleVisibilityChange = () => {
@@ -23,28 +19,22 @@ export default function SecurityWrapper({ children, userData }) {
       else setIsSecure(true);
     };
 
-    // 4. Mobile Gesture Detection
-    const handleTouchStart = (e) => {
-      if (e.touches.length > 1) {
-        setIsSecure(false); // Blur if more than one finger (screenshot gesture)
-        alert('Multi-touch gestures are restricted for security.');
-      }
-    };
-
-    // 5. Dynamic Watermark Movement
-    const moveWatermark = () => {
-      setWatermarkPos({
-        x: Math.random() * 80,
-        y: Math.random() * 90
+    // Tracking for Flashlight Effect (Mouse & Touch)
+    const handleMove = (e) => {
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      setMousePos({ 
+        x: (clientX / window.innerWidth) * 100, 
+        y: (clientY / window.innerHeight) * 100 
       });
     };
-    const watermarkInterval = setInterval(moveWatermark, 4000);
 
     window.addEventListener('contextmenu', handleContextMenu);
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('blur', handleBlur);
     window.addEventListener('focus', handleFocus);
-    window.addEventListener('touchstart', handleTouchStart);
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('touchmove', handleMove, { passive: false });
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
@@ -52,37 +42,61 @@ export default function SecurityWrapper({ children, userData }) {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('blur', handleBlur);
       window.removeEventListener('focus', handleFocus);
-      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('mousemove', handleMove);
+      window.removeEventListener('touchmove', handleMove);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      clearInterval(watermarkInterval);
     };
   }, []);
 
   return (
-    <div style={{ position: 'relative', minHeight: '100vh', userSelect: 'none', overflow: 'hidden' }}>
+    <div style={{ position: 'relative', minHeight: '100vh', userSelect: 'none', overflow: 'hidden', background: '#000' }}>
       
-      {/* 🛡️ THE PERSONALIZED TRAP (Moving Watermark) */}
+      {/* 🌫️ THE FLASHLIGHT CONTAINER */}
       <div style={{
-        position: 'fixed',
-        top: `${watermarkPos.y}%`,
-        left: `${watermarkPos.x}%`,
-        zIndex: 10001,
-        pointerEvents: 'none',
-        opacity: 0.15,
-        color: '#fff',
-        fontSize: '12px',
-        fontWeight: 'bold',
-        background: 'rgba(0,0,0,0.5)',
-        padding: '5px 10px',
-        borderRadius: '4px',
-        whiteSpace: 'nowrap',
-        transition: 'all 3.5s ease-in-out',
-        border: '1px solid rgba(255,255,255,0.2)'
+        filter: isSecure ? 'none' : 'blur(80px)',
+        transition: 'filter 0.3s ease',
       }}>
-        USER: {userData?.name || 'Authorized Student'} | IP: {userData?.ip || 'Verified'} | 🛡️ CONFIDENTIAL
+        
+        {/* Transparent Mask Layer (Only clear in a circle) */}
+        <div style={{
+          WebkitMaskImage: `radial-gradient(circle 100px at ${mousePos.x}% ${mousePos.y}%, black 0%, transparent 100%)`,
+          maskImage: `radial-gradient(circle 100px at ${mousePos.x}% ${mousePos.y}%, black 0%, transparent 100%)`,
+          background: 'inherit',
+        }}>
+          {children}
+        </div>
+
+        {/* Blurred Backup Layer (Hides everything else) */}
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          zIndex: 5,
+          pointerEvents: 'none',
+          backdropFilter: 'blur(45px)',
+          background: 'rgba(0,0,0,0.6)',
+        }} />
       </div>
 
-      {/* Grid Deterrent (Makes photos look bad) */}
+      {/* 🛡️ THE PERSONALIZED TRAP (Floating Info) */}
+      <div style={{
+        position: 'fixed',
+        bottom: '20px',
+        left: '20px',
+        zIndex: 10001,
+        pointerEvents: 'none',
+        opacity: 0.5,
+        color: 'red',
+        fontSize: '10px',
+        fontWeight: 'bold',
+        textTransform: 'uppercase'
+      }}>
+        TRACKED SESSION: {userData?.email} | IP: {userData?.ip}
+      </div>
+
+      {/* Digital Noise Deterrent (Anti-Photo) */}
       <div style={{
         position: 'fixed',
         top: 0,
@@ -91,44 +105,11 @@ export default function SecurityWrapper({ children, userData }) {
         height: '100%',
         zIndex: 10000,
         pointerEvents: 'none',
-        opacity: 0.02,
-        background: 'repeating-linear-gradient(0deg, #fff, #fff 1px, transparent 1px, transparent 2px)',
-        backgroundSize: '100% 2px'
+        opacity: 0.03,
+        backgroundImage: 'url("https://media.giphy.com/media/oEI9uWU7AT9qo/giphy.gif")',
       }} />
 
-      {/* Background Static Watermarks */}
-      <div style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        pointerEvents: 'none',
-        zIndex: 9999,
-        opacity: 0.08,
-        display: 'flex',
-        flexWrap: 'wrap',
-        justifyContent: 'space-around',
-        alignContent: 'space-around',
-      }}>
-        {Array.from({ length: 30 }).map((_, i) => (
-          <div key={i} style={{ transform: 'rotate(-45deg)', fontSize: '14px', fontWeight: 'bold', color: '#fff' }}>
-            {userData?.email || 'MASH MAGIC'}
-          </div>
-        ))}
-      </div>
-
-      {/* Main Content */}
-      <div style={{
-        filter: isSecure ? 'none' : 'blur(50px)',
-        transition: 'filter 0.2s ease',
-        userSelect: 'none',
-        WebkitUserSelect: 'none',
-      }}>
-        {children}
-      </div>
-
-      {/* Security Overlay */}
+      {/* Security Lockout Screen */}
       {!isSecure && (
         <div style={{
           position: 'fixed',
@@ -136,7 +117,7 @@ export default function SecurityWrapper({ children, userData }) {
           left: 0,
           width: '100%',
           height: '100%',
-          zIndex: 10002,
+          zIndex: 10005,
           background: '#000',
           display: 'flex',
           alignItems: 'center',
@@ -145,8 +126,8 @@ export default function SecurityWrapper({ children, userData }) {
         }}>
           <div>
             <div style={{ fontSize: '60px', marginBottom: '20px' }}>🔐</div>
-            <h2 style={{ color: 'var(--accent-gold)', marginBottom: '10px' }}>PROTECTED CONTENT</h2>
-            <p style={{ color: '#fff', fontSize: '14px' }}>Capture attempt or focus loss detected.<br/>Unauthorized sharing is strictly tracked.</p>
+            <h2 style={{ color: 'red', letterSpacing: '4px' }}>SECURITY BREACH</h2>
+            <p style={{ color: '#fff' }}>Unauthorized capture attempt detected.<br/>Access has been suspended for this session.</p>
           </div>
         </div>
       )}
