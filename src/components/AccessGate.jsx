@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { db } from '../firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 export default function AccessGate({ onRequested }) {
   const [email, setEmail] = useState('');
@@ -13,11 +15,25 @@ export default function AccessGate({ onRequested }) {
       .catch(() => setIp('Unable to detect IP'));
   }, []);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (email && name) {
-      setSubmitted(true);
-      onRequested({ name, email, ip });
+      try {
+        setSubmitted(true);
+        // Write request to Firestore
+        await addDoc(collection(db, "requests"), {
+          name,
+          email,
+          ip,
+          status: 'pending',
+          timestamp: serverTimestamp()
+        });
+        onRequested({ name, email, ip });
+      } catch (err) {
+        console.error("Error submitting request:", err);
+        alert("Failed to send request. Please check your internet or Firebase config.");
+        setSubmitted(false);
+      }
     }
   };
 
