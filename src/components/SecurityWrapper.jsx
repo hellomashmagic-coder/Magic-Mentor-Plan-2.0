@@ -49,24 +49,30 @@ export default function SecurityWrapper({ children, userData }) {
   }, []);
 
   return (
-    <div style={{ position: 'relative', minHeight: '100vh', userSelect: 'none', overflow: 'hidden', background: '#000' }}>
+    <div style={{ 
+      position: 'relative', 
+      minHeight: '100vh', 
+      userSelect: 'none', 
+      overflow: 'hidden', 
+      background: '#0a0c10' 
+    }}>
       
-      {/* 🌫️ THE FLASHLIGHT CONTAINER */}
+      {/* 🌫️ THE SECURITY LAYERS */}
       <div style={{
-        filter: isSecure ? 'none' : 'blur(80px)',
+        filter: isSecure ? 'none' : 'blur(60px)',
         transition: 'filter 0.3s ease',
+        minHeight: '100vh'
       }}>
         
-        {/* Transparent Mask Layer (Only clear in a circle) */}
+        {/* Main Dashboard (Hidden by Mask) */}
         <div style={{
-          WebkitMaskImage: `radial-gradient(circle 100px at ${mousePos.x}% ${mousePos.y}%, black 0%, transparent 100%)`,
-          maskImage: `radial-gradient(circle 100px at ${mousePos.x}% ${mousePos.y}%, black 0%, transparent 100%)`,
-          background: 'inherit',
+          WebkitMaskImage: `radial-gradient(circle 150px at ${mousePos.x}% ${mousePos.y}%, black 20%, transparent 100%)`,
+          maskImage: `radial-gradient(circle 150px at ${mousePos.x}% ${mousePos.y}%, black 20%, transparent 100%)`,
         }}>
           {children}
         </div>
 
-        {/* Blurred Backup Layer (Hides everything else) */}
+        {/* Global Blur Overlay (This covers everything except the flashlight hole) */}
         <div style={{
           position: 'fixed',
           top: 0,
@@ -75,39 +81,47 @@ export default function SecurityWrapper({ children, userData }) {
           height: '100%',
           zIndex: 5,
           pointerEvents: 'none',
-          backdropFilter: 'blur(45px)',
-          background: 'rgba(0,0,0,0.6)',
+          backdropFilter: 'blur(35px)',
+          background: 'rgba(0,0,0,0.85)',
+          WebkitMaskImage: `radial-gradient(circle 150px at ${mousePos.x}% ${mousePos.y}%, transparent 20%, black 100%)`,
+          maskImage: `radial-gradient(circle 150px at ${mousePos.x}% ${mousePos.y}%, transparent 20%, black 100%)`,
         }} />
       </div>
 
-      {/* 🛡️ THE PERSONALIZED TRAP (Floating Info) */}
+      {/* Instruction Tip */}
       <div style={{
         position: 'fixed',
-        bottom: '20px',
-        left: '20px',
-        zIndex: 10001,
+        top: '15px',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        zIndex: 10002,
+        background: 'rgba(255,255,255,0.1)',
+        padding: '5px 15px',
+        borderRadius: '20px',
+        fontSize: '11px',
+        color: '#aaa',
         pointerEvents: 'none',
-        opacity: 0.5,
-        color: 'red',
-        fontSize: '10px',
-        fontWeight: 'bold',
-        textTransform: 'uppercase'
+        border: '1px solid rgba(255,255,255,0.1)'
       }}>
-        TRACKED SESSION: {userData?.email} | IP: {userData?.ip}
+        Move finger/mouse to reveal content
       </div>
 
-      {/* Digital Noise Deterrent (Anti-Photo) */}
+      {/* 🛡️ DYNAMIC WATERMARK */}
       <div style={{
         position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        zIndex: 10000,
+        bottom: '10px',
+        right: '10px',
+        zIndex: 10003,
         pointerEvents: 'none',
-        opacity: 0.03,
-        backgroundImage: 'url("https://media.giphy.com/media/oEI9uWU7AT9qo/giphy.gif")',
-      }} />
+        opacity: 0.3,
+        color: '#fff',
+        fontSize: '10px',
+        padding: '4px 8px',
+        borderRadius: '4px',
+        background: 'rgba(255,0,0,0.2)'
+      }}>
+        CONFIDENTIAL | {userData?.email}
+      </div>
 
       {/* Security Lockout Screen */}
       {!isSecure && (
@@ -126,8 +140,8 @@ export default function SecurityWrapper({ children, userData }) {
         }}>
           <div>
             <div style={{ fontSize: '60px', marginBottom: '20px' }}>🔐</div>
-            <h2 style={{ color: 'red', letterSpacing: '4px' }}>SECURITY BREACH</h2>
-            <p style={{ color: '#fff' }}>Unauthorized capture attempt detected.<br/>Access has been suspended for this session.</p>
+            <h2 style={{ color: 'red' }}>SECURITY ACTIVE</h2>
+            <p style={{ color: '#fff' }}>Please return to this window.</p>
           </div>
         </div>
       )}
