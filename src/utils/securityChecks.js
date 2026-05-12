@@ -6,8 +6,7 @@
 const APPROVED_DOMAINS = [
   'localhost',
   '127.0.0.1',
-  // Add your production domain here
-  // 'magicmentor.mashmagic.com'
+  'magic-mentor-plan-2-0.vercel.app',
 ];
 
 export function performSecurityAudit() {
