@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import emailjs from '@emailjs/browser';
 
 export default function AccessGate({ onRequested }) {
   const [email, setEmail] = useState('');
@@ -20,7 +21,29 @@ export default function AccessGate({ onRequested }) {
     if (email && name) {
       try {
         setSubmitted(true);
-        // Write request to Firestore
+        
+        // 1. Send Email Notification via EmailJS
+        // ⚠️ REPLACE WITH YOUR OWN KEYS FROM EMAILJS.COM
+        const templateParams = {
+          from_name: name,
+          from_email: email,
+          ip_address: ip,
+          to_email: 'hellomashmagic@gmail.com',
+          message: `New access request from ${name} (${email}) at IP: ${ip}`
+        };
+
+        emailjs.send(
+          'YOUR_SERVICE_ID', 
+          'YOUR_TEMPLATE_ID', 
+          templateParams, 
+          'YOUR_PUBLIC_KEY'
+        ).then(() => {
+          console.log('Email sent successfully!');
+        }).catch((err) => {
+          console.error('Email failed to send:', err);
+        });
+
+        // 2. Write request to Firestore for real-time approval
         await addDoc(collection(db, "requests"), {
           name,
           email,
@@ -28,6 +51,7 @@ export default function AccessGate({ onRequested }) {
           status: 'pending',
           timestamp: serverTimestamp()
         });
+        
         onRequested({ name, email, ip });
       } catch (err) {
         console.error("Error submitting request:", err);
