@@ -34,6 +34,7 @@ export default function SecurityWrapper({ children, userData }) {
   }, [isSecure]);
 
   useEffect(() => {
+    // Basic protections against right-click and shortcuts
     const handleContextMenu = (e) => e.preventDefault();
     const handleKeyDown = (e) => {
       if ((e.metaKey || e.ctrlKey) && (e.key === 'p' || e.key === 's' || e.key === 'c')) {
@@ -41,43 +42,33 @@ export default function SecurityWrapper({ children, userData }) {
       }
     };
 
-    // 🛡️ Security Heartbeat + Improved Lag Detector
-    let lastTick = Date.now();
-    const securityCheck = () => {
-      const now = Date.now();
-      const delta = now - lastTick;
-      lastTick = now;
+    window.addEventListener('contextmenu', handleContextMenu);
+    window.addEventListener('keydown', handleKeyDown);
 
-      // Higher threshold (500ms) to avoid counting normal device lag
-      if (delta > 500) {
-        setIsSecure(false);
-      }
-
-      if (!document.hasFocus() || document.hidden) {
+    // Only trigger security breach if the tab is hidden, this avoids false positives
+    // when clicking around or during normal app lag.
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
         setIsSecure(false);
       } else {
-        // Only return to secure if the device is running smoothly
-        if (delta < 150) setIsSecure(true);
+        setIsSecure(true);
       }
     };
-    const heartbeat = setInterval(securityCheck, 100);
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
-    window.addEventListener('contextmenu', (e) => e.preventDefault());
-    window.addEventListener('keydown', (e) => {
-      if ((e.metaKey || e.ctrlKey) && (e.key === 'p' || e.key === 's' || e.key === 'c')) {
-        e.preventDefault();
-      }
-    });
-    window.addEventListener('blur', () => setIsSecure(false));
-    window.addEventListener('touchstart', (e) => {
-      if (e.touches.length > 1) setIsSecure(false);
-    });
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden) setIsSecure(false);
-    });
+    // Keep the identity watermark moving slowly across the screen
+    const watermarkInterval = setInterval(() => {
+      setWatermarkPos({
+        x: Math.random() * 80,
+        y: Math.random() * 80
+      });
+    }, 5000);
 
     return () => {
-      clearInterval(heartbeat);
+      window.removeEventListener('contextmenu', handleContextMenu);
+      window.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       clearInterval(watermarkInterval);
     };
   }, []);
@@ -100,7 +91,7 @@ export default function SecurityWrapper({ children, userData }) {
         padding: '8px 16px',
         borderRadius: '6px',
         whiteSpace: 'nowrap',
-        transition: 'all 1.5s linear',
+        transition: 'all 5s linear',
         border: '2px solid #fff',
         boxShadow: '0 0 20px rgba(255,0,0,0.5)',
       }}>
