@@ -28,7 +28,6 @@ export default function App() {
         const q = query(
           collection(db, "requests"), 
           where("ip", "==", currentIp), 
-          where("fingerprint", "==", fingerprint),
           where("status", "==", "approved")
         );
 
