@@ -17,34 +17,33 @@ export default function App() {
 
   // Strict Device-Locked Lifetime Approval
   useEffect(() => {
-    const fingerprint = `${navigator.userAgent}-${window.screen.width}x${window.screen.height}`;
+    let deviceId = localStorage.getItem('mash_magic_device_id');
+    
+    // If no device ID exists, we just let them stay unapproved and they will
+    // be routed to AccessGate which will generate one when they request access.
+    if (!deviceId) {
+      setIsApproved(false);
+      return;
+    }
 
-    fetch('https://api.ipify.org?format=json')
-      .then(res => res.json())
-      .then(data => {
-        const currentIp = data.ip;
-        if (!currentIp || currentIp === 'Detecting...') return;
+    const q = query(
+      collection(db, "requests"), 
+      where("deviceId", "==", deviceId), 
+      where("status", "==", "approved")
+    );
 
-        const q = query(
-          collection(db, "requests"), 
-          where("ip", "==", currentIp), 
-          where("status", "==", "approved")
-        );
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      if (!snapshot.empty) {
+        const docData = snapshot.docs[0].data();
+        const docId = snapshot.docs[0].id;
+        setUserData({ ...docData, id: docId });
+        setIsApproved(true);
+      } else {
+        setIsApproved(false);
+      }
+    });
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-          if (!snapshot.empty) {
-            const docData = snapshot.docs[0].data();
-            const docId = snapshot.docs[0].id;
-            setUserData({ ...docData, id: docId });
-            setIsApproved(true);
-          } else {
-            setIsApproved(false);
-          }
-        });
-
-        return () => unsubscribe();
-      })
-      .catch(err => console.error('Security Audit Failed:', err));
+    return () => unsubscribe();
   }, []);
 
   const handleRequestAccess = (data) => {

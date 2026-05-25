@@ -22,32 +22,35 @@ export default function AccessGate({ onRequested }) {
       try {
         setSubmitted(true);
         
-        // Generate device fingerprint
-        const fingerprint = `${navigator.userAgent}-${window.screen.width}x${window.screen.height}`;
+        // 1. Get or create persistent Device ID in localStorage
+        let deviceId = localStorage.getItem('mash_magic_device_id');
+        if (!deviceId) {
+          deviceId = crypto.randomUUID ? crypto.randomUUID() : `dev-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+          localStorage.setItem('mash_magic_device_id', deviceId);
+        }
 
-        // 1. Send Email Notification
+        // 2. Send Email Notification
         const templateParams = {
           from_name: name,
           from_email: email,
           ip_address: ip,
           to_email: 'hellomashmagic@gmail.com',
-          message: `New access request from ${name} at IP: ${ip} (Device: ${fingerprint})`
+          message: `New access request from ${name} at IP: ${ip} (Device ID: ${deviceId})`
         };
         
-        // (emailjs.send call here...)
         emailjs.send('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', templateParams, 'YOUR_PUBLIC_KEY');
 
-        // 2. Write to Firestore with Fingerprint
+        // 3. Write to Firestore with Persistent Device ID
         await addDoc(collection(db, "requests"), {
           name,
           email,
           ip,
-          fingerprint,
+          deviceId,
           status: 'pending',
           timestamp: serverTimestamp()
         });
         
-        onRequested({ name, email, ip });
+        onRequested({ name, email, ip, deviceId });
       } catch (err) {
         console.error("Error submitting request:", err);
         setSubmitted(false);
