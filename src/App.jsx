@@ -19,11 +19,10 @@ export default function App() {
   useEffect(() => {
     let deviceId = localStorage.getItem('mash_magic_device_id');
     
-    // If no device ID exists, we just let them stay unapproved and they will
-    // be routed to AccessGate which will generate one when they request access.
+    // Generate device ID immediately if it doesn't exist so the listener can start
     if (!deviceId) {
-      setIsApproved(false);
-      return;
+      deviceId = crypto.randomUUID ? crypto.randomUUID() : `dev-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+      localStorage.setItem('mash_magic_device_id', deviceId);
     }
 
     const q = query(
