@@ -93,6 +93,9 @@ export default function ManagerGate() {
                   <h3 style={{ color: '#fff', marginBottom: '4px' }}>{req.name}</h3>
                   <p style={{ color: '#8b949e', fontSize: '14px' }}>{req.email}</p>
                   <p style={{ color: '#f6c90e', fontSize: '12px', marginTop: '4px' }}>IP: {req.ip}</p>
+                  {req.deviceId && (
+                    <p style={{ color: '#8b949e', fontSize: '11px', marginTop: '2px', fontFamily: 'monospace' }}>Device ID: {req.deviceId.split('-')[1] || req.deviceId}</p>
+                  )}
                   
                   {/* 🚨 VIOLATION TRACKER */}
                   <div style={{ 
