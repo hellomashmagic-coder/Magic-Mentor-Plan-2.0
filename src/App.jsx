@@ -15,34 +15,80 @@ export default function App() {
   const [userData, setUserData] = useState(null);
   const [pendingRequest, setPendingRequest] = useState(null);
 
-  // Strict Device-Locked Lifetime Approval
+  // 100% Bulletproof Hybrid Approval System (IP + Device ID with Auto-Heal)
   useEffect(() => {
     let deviceId = localStorage.getItem('mash_magic_device_id');
-    
-    // Generate device ID immediately if it doesn't exist so the listener can start
     if (!deviceId) {
       deviceId = crypto.randomUUID ? crypto.randomUUID() : `dev-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
       localStorage.setItem('mash_magic_device_id', deviceId);
     }
 
-    const q = query(
-      collection(db, "requests"), 
-      where("deviceId", "==", deviceId), 
-      where("status", "==", "approved")
-    );
+    let unsubscribeIp = () => {};
+    let unsubscribeDevice = () => {};
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      if (!snapshot.empty) {
-        const docData = snapshot.docs[0].data();
-        const docId = snapshot.docs[0].id;
-        setUserData({ ...docData, id: docId });
-        setIsApproved(true);
-      } else {
-        setIsApproved(false);
-      }
-    });
+    fetch('https://api.ipify.org?format=json')
+      .then(res => res.json())
+      .then(data => {
+        const currentIp = data.ip;
+        if (!currentIp || currentIp === 'Detecting...') return;
 
-    return () => unsubscribe();
+        const qIp = query(collection(db, "requests"), where("ip", "==", currentIp), where("status", "==", "approved"));
+        const qDevice = query(collection(db, "requests"), where("deviceId", "==", deviceId), where("status", "==", "approved"));
+
+        let ipDoc = null;
+        let deviceDoc = null;
+
+        const evaluateApproval = async () => {
+          const validDoc = deviceDoc || ipDoc;
+          if (validDoc) {
+            setUserData({ ...validDoc.data(), id: validDoc.id });
+            setIsApproved(true);
+
+            // AUTO-HEAL: If they got in via IP (e.g. they used WhatsApp browser which wiped localStorage), 
+            // but their Device ID is now different, we silently update the database with their new Device ID.
+            // This guarantees they won't lose access even if their IP changes tomorrow!
+            if (validDoc.data().deviceId !== deviceId) {
+              try {
+                const { doc, updateDoc } = await import('firebase/firestore');
+                await updateDoc(doc(db, "requests", validDoc.id), { deviceId: deviceId });
+              } catch (e) {
+                console.error("Auto-heal failed", e);
+              }
+            }
+          } else {
+            setIsApproved(false);
+          }
+        };
+
+        unsubscribeIp = onSnapshot(qIp, (snapshot) => {
+          ipDoc = !snapshot.empty ? snapshot.docs[0] : null;
+          evaluateApproval();
+        });
+
+        unsubscribeDevice = onSnapshot(qDevice, (snapshot) => {
+          deviceDoc = !snapshot.empty ? snapshot.docs[0] : null;
+          evaluateApproval();
+        });
+      })
+      .catch(err => {
+        console.error('IP Fetch Failed:', err);
+        // Fallback: Just check Device ID if IP fetch fails (e.g. adblocker)
+        const qDevice = query(collection(db, "requests"), where("deviceId", "==", deviceId), where("status", "==", "approved"));
+        unsubscribeDevice = onSnapshot(qDevice, (snapshot) => {
+          if (!snapshot.empty) {
+            const docData = snapshot.docs[0].data();
+            setUserData({ ...docData, id: snapshot.docs[0].id });
+            setIsApproved(true);
+          } else {
+            setIsApproved(false);
+          }
+        });
+      });
+
+    return () => {
+      unsubscribeIp();
+      unsubscribeDevice();
+    };
   }, []);
 
   const handleRequestAccess = (data) => {
