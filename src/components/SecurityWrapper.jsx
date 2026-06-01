@@ -28,25 +28,24 @@ export default function SecurityWrapper({ children, userData }) {
   };
 
   useEffect(() => {
-    if (!isSecure) {
-      logViolation();
-    }
-  }, [isSecure]);
-
-  useEffect(() => {
     // Basic protections against right-click and shortcuts
-    const handleContextMenu = (e) => e.preventDefault();
+    const handleContextMenu = (e) => {
+      e.preventDefault();
+      logViolation(); // Right click is suspicious
+    };
+    
     const handleKeyDown = (e) => {
       if ((e.metaKey || e.ctrlKey) && (e.key === 'p' || e.key === 's' || e.key === 'c')) {
         e.preventDefault();
+        logViolation(); // Trying to save/print/copy is suspicious
       }
     };
 
     window.addEventListener('contextmenu', handleContextMenu);
     window.addEventListener('keydown', handleKeyDown);
 
-    // Only trigger security breach if the tab is hidden, this avoids false positives
-    // when clicking around or during normal app lag.
+    // Hide the screen when they switch apps, but DO NOT log it as a violation!
+    // Users naturally switch apps to check messages, we shouldn't punish them for it.
     const handleVisibilityChange = () => {
       if (document.hidden) {
         setIsSecure(false);
